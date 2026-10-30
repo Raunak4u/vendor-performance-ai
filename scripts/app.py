@@ -1626,6 +1626,14 @@ def find_vendor(name: str, vs: pd.DataFrame):
 def product_frame(vp: pd.DataFrame) -> pd.DataFrame:
     vp = vp.copy()
     vp.columns = [str(c).lower().strip() for c in vp.columns]
+    print('PRODUCT_FRAME COLS:', list(vp.columns))
+    # alag naam ho to map kar do
+    _mp = {'brand_name':'brand','brand_id':'brand','product_description':'description','product':'description','item_description':'description','desc':'description'}
+    vp = vp.rename(columns={k:v for k,v in _mp.items() if k in vp.columns})
+    if 'brand' not in vp.columns: vp['brand'] = 'Unknown'
+    if 'description' not in vp.columns: vp['description'] = vp.get('brand','Unknown')
+    for _col in ['sales','sales_qty','purchases','purchase_qty']:
+        if _col not in vp.columns: vp[_col] = 0
     if vp.empty:
         return pd.DataFrame()
     pf = vp.groupby(["brand", "description"], as_index=False)[_cols(vp.groupby(["brand", "description"], as_index=False), ["sales", "sales_qty", "purchases", "purchase_qty"])].sum()
