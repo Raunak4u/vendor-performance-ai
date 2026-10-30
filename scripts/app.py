@@ -37,23 +37,26 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-# AUTO-BUILD: Cloud pe DB khaali (0 bytes) ho to data/ se khud bana lo
-import os, sqlite3
-_DB = 'vendor_performance.db'
-if (not os.path.exists(_DB)) or os.path.getsize(_DB) == 0:
-    try:
+# AUTO-BUILD FIX: agar asli DB khaali hai to data/ se bhar do
+try:
+    from src.database import DB_PATH as _REAL_DB
+    import os as _os, sqlite3 as _sq
+    if (not _os.path.exists(_REAL_DB)) or _os.path.getsize(_REAL_DB) == 0:
         import pandas as _pd
-        _c = sqlite3.connect(_DB)
-        for _name in ['vendors','products','purchases','sales','vendor_summary','begin_inventory','end_inventory','purchase_prices','vendor_invoice']:
-            _f = f'data/{_name}.csv'
-            if os.path.exists(_f):
-                _pd.read_csv(_f).to_sql(_name, _c, if_exists='replace', index=False)
-        # app ko chahiye wali fixed table
-        _pd.read_csv('data/vendor_summary.csv').to_sql('vendor_summary_fixed', _c, if_exists='replace', index=False)
+        _c = _sq.connect(str(_REAL_DB))
+        for _n in ['vendors','products','purchases','sales','vendor_summary']:
+            _f = _REAL_DB.parent / 'data' / f'{_n}.csv'
+            if _f.exists():
+                _pd.read_csv(_f).to_sql(_n, _c, if_exists='replace', index=False)
+        _pd.read_csv(_REAL_DB.parent / 'data' / 'vendor_summary.csv').to_sql('vendor_summary_fixed', _c, if_exists='replace', index=False)
         _c.close()
-        print('AUTO-BUILD DB DONE')
-    except Exception as _e:
-        print('AUTO-BUILD FAILED:', _e)
+        print('AUTO-BUILD DB DONE at', _REAL_DB)
+except Exception as _e:
+    print('AUTO-BUILD FAILED:', _e)
+
+
+
+
 
 from sqlalchemy import text
 
