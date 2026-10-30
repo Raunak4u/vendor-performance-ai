@@ -37,11 +37,21 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-# AUTO-BUILD FIX v2: raw + agg tables dono banao
+# AUTO-BUILD FIX v3: agar agg table missing hai to bhi banao
 try:
     from src.database import DB_PATH as _REAL_DB
     import os as _os, sqlite3 as _sq
+    _need = False
     if (not _os.path.exists(_REAL_DB)) or _os.path.getsize(_REAL_DB) == 0:
+        _need = True
+    else:
+        _chk = _sq.connect(str(_REAL_DB))
+        _row = _chk.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='agg_vendor_product'").fetchone()
+        _chk.close()
+        if not _row:
+            _need = True
+            print('AGG TABLE MISSING - rebuilding')
+    if _need:
         import pandas as _pd
         _c = _sq.connect(str(_REAL_DB))
         for _n in ['vendors','products','purchases','sales','vendor_summary','begin_inventory','end_inventory','purchase_prices','vendor_invoice']:
@@ -51,24 +61,16 @@ try:
         _pd.read_csv(_REAL_DB.parent / 'data' / 'vendor_summary.csv').to_sql('vendor_summary_fixed', _c, if_exists='replace', index=False)
         _c.commit(); _c.close()
         print('AUTO-BUILD RAW DONE')
-        # ab agg tables banao - jo function mile usse
         try:
             from src.database import build_aggregates
-            try:
-                build_aggregates(str(_REAL_DB))
-            except TypeError:
-                build_aggregates()
+            build_aggregates()  # Engine khud banayega, string mat bhejo
             print('AUTO-BUILD AGG DONE')
         except Exception as _ae:
-            print('AGG BUILD FAILED, trying manual:', _ae)
-            # manual fallback: products se agg_vendor_product banao
-            _c2 = _sq.connect(str(_REAL_DB))
-            _c2.execute("DROP TABLE IF EXISTS agg_vendor_product")
-            _c2.execute("CREATE TABLE agg_vendor_product AS SELECT VendorNumber as vendor_number, Brand as brand, Description as description, SUM(TotalSalesDollars) as sales, SUM(SalesQuantity) as sales_qty, 0 as purchases, 0 as purchase_qty FROM sales GROUP BY VendorNumber, Brand, Description")
-            _c2.commit(); _c2.close()
-            print('MANUAL AGG DONE')
+            print('AGG BUILD FAILED:', _ae)
 except Exception as _e:
     print('AUTO-BUILD FAILED:', _e)
+
+
 
 
 
