@@ -1,0 +1,12 @@
+﻿venv/
+__pycache__/
+*.pyc
+*.sqlite
+*.sqlite3
+.env
+.env.*
+fix_*.py
+.DS_Store
+backup_old/
+.vscode/
+logic_report.txt
