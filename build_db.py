@@ -232,3 +232,8 @@ if __name__ == "__main__":
 
     finally:
         engine.dispose()
+
+# Cloud fix: app needs vendor_summary_fixed
+import pandas as pd
+df_fixed = pd.read_csv('data/vendor_summary.csv')
+df_fixed.to_sql('vendor_summary_fixed', conn, if_exists='replace', index=False)
