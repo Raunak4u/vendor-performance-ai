@@ -1624,6 +1624,8 @@ def find_vendor(name: str, vs: pd.DataFrame):
 
 
 def product_frame(vp: pd.DataFrame) -> pd.DataFrame:
+    vp = vp.copy()
+    vp.columns = [str(c).lower().strip() for c in vp.columns]
     if vp.empty:
         return pd.DataFrame()
     pf = vp.groupby(["brand", "description"], as_index=False)[_cols(vp.groupby(["brand", "description"], as_index=False), ["sales", "sales_qty", "purchases", "purchase_qty"])].sum()
