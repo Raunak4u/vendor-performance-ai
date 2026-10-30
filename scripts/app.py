@@ -36,6 +36,25 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+
+# AUTO-BUILD: Cloud pe DB khaali (0 bytes) ho to data/ se khud bana lo
+import os, sqlite3
+_DB = 'vendor_performance.db'
+if (not os.path.exists(_DB)) or os.path.getsize(_DB) == 0:
+    try:
+        import pandas as _pd
+        _c = sqlite3.connect(_DB)
+        for _name in ['vendors','products','purchases','sales','vendor_summary','begin_inventory','end_inventory','purchase_prices','vendor_invoice']:
+            _f = f'data/{_name}.csv'
+            if os.path.exists(_f):
+                _pd.read_csv(_f).to_sql(_name, _c, if_exists='replace', index=False)
+        # app ko chahiye wali fixed table
+        _pd.read_csv('data/vendor_summary.csv').to_sql('vendor_summary_fixed', _c, if_exists='replace', index=False)
+        _c.close()
+        print('AUTO-BUILD DB DONE')
+    except Exception as _e:
+        print('AUTO-BUILD FAILED:', _e)
+
 from sqlalchemy import text
 
 try:  # optional: lets you keep API keys in a .env file
